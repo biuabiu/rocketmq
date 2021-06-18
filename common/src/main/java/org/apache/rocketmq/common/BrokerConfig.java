@@ -30,28 +30,41 @@ public class BrokerConfig {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.COMMON_LOGGER_NAME);
 
     private String rocketmqHome = System.getProperty(MixAll.ROCKETMQ_HOME_PROPERTY, System.getenv(MixAll.ROCKETMQ_HOME_ENV));
+    
     @ImportantField
     private String namesrvAddr = System.getProperty(MixAll.NAMESRV_ADDR_PROPERTY, System.getenv(MixAll.NAMESRV_ADDR_ENV));
+    
     @ImportantField
     private String brokerIP1 = RemotingUtil.getLocalAddress();
+    
     private String brokerIP2 = RemotingUtil.getLocalAddress();
+    
     @ImportantField
     private String brokerName = localHostName();
+    
     @ImportantField
     private String brokerClusterName = "DefaultCluster";
+    
     @ImportantField
     private long brokerId = MixAll.MASTER_ID;
+    
     private int brokerPermission = PermName.PERM_READ | PermName.PERM_WRITE;
+    
     private int defaultTopicQueueNums = 8;
+    
     @ImportantField
     private boolean autoCreateTopicEnable = true;
 
     private boolean clusterTopicEnable = true;
 
     private boolean brokerTopicEnable = true;
+    
+    // 自动创建订阅组
     @ImportantField
     private boolean autoCreateSubscriptionGroup = true;
+    
     private String messageStorePlugIn = "";
+    // msg trace 的topic
     @ImportantField
     private String msgTraceTopicName = TopicValidator.RMQ_SYS_TRACE_TOPIC;
     @ImportantField

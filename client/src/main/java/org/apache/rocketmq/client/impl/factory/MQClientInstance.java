@@ -619,6 +619,7 @@ public class MQClientInstance {
                             }
                         }
                     } else {
+                    	// 超时bug,即使外围设置超时大于3s,这里连不上也直接触发超时,个人觉得还是有问题的 FIXME
                         topicRouteData = this.mQClientAPIImpl.getTopicRouteInfoFromNameServer(topic, 1000 * 3);
                     }
                     if (topicRouteData != null) {

@@ -16,6 +16,7 @@
  */
 package org.apache.rocketmq.common;
 
+import java.beans.PropertyDescriptor;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,12 +33,10 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.rocketmq.common.annotation.ImportantField;
 import org.apache.rocketmq.common.constant.LoggerName;
 import org.apache.rocketmq.common.help.FAQUrl;
@@ -311,45 +310,20 @@ public class MixAll {
         return properties;
     }
 
-    public static void properties2Object(final Properties p, final Object object) {
-        Method[] methods = object.getClass().getMethods();
-        for (Method method : methods) {
-            String mn = method.getName();
-            if (mn.startsWith("set")) {
-                try {
-                    String tmp = mn.substring(4);
-                    String first = mn.substring(3, 4);
-
-                    String key = first.toLowerCase() + tmp;
-                    String property = p.getProperty(key);
-                    if (property != null) {
-                        Class<?>[] pt = method.getParameterTypes();
-                        if (pt != null && pt.length > 0) {
-                            String cn = pt[0].getSimpleName();
-                            Object arg = null;
-                            if (cn.equals("int") || cn.equals("Integer")) {
-                                arg = Integer.parseInt(property);
-                            } else if (cn.equals("long") || cn.equals("Long")) {
-                                arg = Long.parseLong(property);
-                            } else if (cn.equals("double") || cn.equals("Double")) {
-                                arg = Double.parseDouble(property);
-                            } else if (cn.equals("boolean") || cn.equals("Boolean")) {
-                                arg = Boolean.parseBoolean(property);
-                            } else if (cn.equals("float") || cn.equals("Float")) {
-                                arg = Float.parseFloat(property);
-                            } else if (cn.equals("String")) {
-                                arg = property;
-                            } else {
-                                continue;
-                            }
-                            method.invoke(object, arg);
-                        }
-                    }
-                } catch (Throwable ignored) {
-                }
-            }
-        }
-    }
+	public static void properties2Object(final Properties p, final Object object) {
+		PropertyDescriptor[] descriptors = PropertyUtils.getPropertyDescriptors(object);
+		for (PropertyDescriptor per : descriptors) {
+			try {
+				String name = per.getName();
+				Object value = p.get(name);
+				if (Objects.nonNull(value)) {
+					PropertyUtils.setProperty(object, name, value);
+				}
+			} catch (Throwable ignored) {
+				//ignore
+			}
+		}
+	}
 
     public static boolean isPropertiesEqual(final Properties p1, final Properties p2) {
         return p1.equals(p2);

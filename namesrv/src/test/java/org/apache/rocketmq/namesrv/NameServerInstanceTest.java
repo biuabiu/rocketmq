@@ -16,10 +16,10 @@
  */
 package org.apache.rocketmq.namesrv;
 
+import org.apache.rocketmq.common.UtilAll;
 import org.apache.rocketmq.common.namesrv.NamesrvConfig;
 import org.apache.rocketmq.remoting.netty.NettyServerConfig;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,6 +35,7 @@ public class NameServerInstanceTest {
         boolean initResult = nameSrvController.initialize();
         assertThat(initResult).isTrue();
         nameSrvController.start();
+        System.out.println(UtilAll.jstack());
     }
 
     @After
@@ -44,4 +45,9 @@ public class NameServerInstanceTest {
         }
         //maybe need to clean the file store. But we do not suggest deleting anything.
     }
+    
+    @Test
+    public void test() {
+		
+	}
 }

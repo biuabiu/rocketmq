@@ -189,38 +189,45 @@ public abstract class NettyRemotingAbstract {
      * @param ctx channel handler context.
      * @param cmd request command.
      */
+    // C0 发送消息 会经过的hander 
     public void processRequestCommand(final ChannelHandlerContext ctx, final RemotingCommand cmd) {
         final Pair<NettyRequestProcessor, ExecutorService> matched = this.processorTable.get(cmd.getCode());
         final Pair<NettyRequestProcessor, ExecutorService> pair = null == matched ? this.defaultRequestProcessor : matched;
         final int opaque = cmd.getOpaque();
 
         if (pair != null) {
+        	// 这里还只是在构建处理请求的 任务
             Runnable run = new Runnable() {
                 @Override
                 public void run() {
                     try {
+                    	// 钩子函数
                         doBeforeRpcHooks(RemotingHelper.parseChannelRemoteAddr(ctx.channel()), cmd);
-                        final RemotingResponseCallback callback = new RemotingResponseCallback() {
-                            @Override
-                            public void callback(RemotingCommand response) {
-                                doAfterRpcHooks(RemotingHelper.parseChannelRemoteAddr(ctx.channel()), cmd, response);
-                                if (!cmd.isOnewayRPC()) {
-                                    if (response != null) {
-                                        response.setOpaque(opaque);
-                                        response.markResponseType();
-                                        try {
-                                            ctx.writeAndFlush(response);
-                                        } catch (Throwable e) {
-                                            log.error("process request over, but response failed", e);
-                                            log.error(cmd.toString());
-                                            log.error(response.toString());
-                                        }
-                                    } else {
-                                    }
-                                }
-                            }
-                        };
+                        // 又来一个回调函数
+						final RemotingResponseCallback callback = new RemotingResponseCallback() {
+							@Override
+							public void callback(RemotingCommand response) {
+								doAfterRpcHooks(RemotingHelper.parseChannelRemoteAddr(ctx.channel()), cmd, response);
+								// C5 发送消息.回调到这里,但是response null
+								if (cmd.isOnewayRPC() || response == null) {
+									return;
+								}
+								response.setOpaque(opaque);
+								response.markResponseType();
+								try {
+									// 真正的回写数据结果
+									ctx.writeAndFlush(response);
+								} catch (Throwable e) {
+									log.error("process request over, but response failed", e);
+									log.error(cmd.toString());
+									log.error(response.toString());
+								}
+							}
+						};
                         if (pair.getObject1() instanceof AsyncNettyRequestProcessor) {
+                        	// 发送消息进这里了
+                        	//C1 处理消息结果,发送到broker返回的结果
+                        	//  发送消息是到这里 org.apache.rocketmq.broker.processor.SendMessageProcessor.processRequest
                             AsyncNettyRequestProcessor processor = (AsyncNettyRequestProcessor)pair.getObject1();
                             processor.asyncProcessRequest(ctx, cmd, callback);
                         } else {
@@ -251,6 +258,7 @@ public abstract class NettyRemotingAbstract {
             }
 
             try {
+            	// C5 发送消息 构造task ,丢到对应的线程池执行
                 final RequestTask requestTask = new RequestTask(run, ctx.channel(), cmd);
                 pair.getObject2().submit(requestTask);
             } catch (RejectedExecutionException e) {
@@ -295,6 +303,7 @@ public abstract class NettyRemotingAbstract {
             if (responseFuture.getInvokeCallback() != null) {
                 executeInvokeCallback(responseFuture);
             } else {
+            	// C5 发送消息 3 release response
                 responseFuture.putResponse(cmd);
                 responseFuture.release();
             }
@@ -312,18 +321,15 @@ public abstract class NettyRemotingAbstract {
         ExecutorService executor = this.getCallbackExecutor();
         if (executor != null) {
             try {
-                executor.submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            responseFuture.executeInvokeCallback();
-                        } catch (Throwable e) {
-                            log.warn("execute callback in executor exception, and callback throw", e);
-                        } finally {
-                            responseFuture.release();
-                        }
-                    }
-                });
+                executor.submit(() -> {
+				    try {
+				        responseFuture.executeInvokeCallback();
+				    } catch (Throwable e) {
+				        log.warn("execute callback in executor exception, and callback throw", e);
+				    } finally {
+				        responseFuture.release();
+				    }
+				});
             } catch (Exception e) {
                 runInThisThread = true;
                 log.warn("execute callback in executor exception, maybe executor busy", e);
@@ -413,6 +419,9 @@ public abstract class NettyRemotingAbstract {
             final ResponseFuture responseFuture = new ResponseFuture(channel, opaque, timeoutMillis, null, null);
             this.responseTable.put(opaque, responseFuture);
             final SocketAddress addr = channel.remoteAddress();
+            if(request.getCode()==310) {
+            	//C5 发送消息 1 request
+            }
             channel.writeAndFlush(request).addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture f) throws Exception {
@@ -430,6 +439,8 @@ public abstract class NettyRemotingAbstract {
                 }
             });
 
+            
+            //C5 发送消息 4 response
             RemotingCommand responseCommand = responseFuture.waitResponse(timeoutMillis);
             if (null == responseCommand) {
                 if (responseFuture.isSendRequestOK()) {

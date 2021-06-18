@@ -56,7 +56,10 @@ public class NamesrvStartup {
         try {
             NamesrvController controller = createNamesrvController(args);
             start(controller);
+            int listenPort = controller.getNettyServerConfig().getListenPort();
+            
             String tip = "The Name Server boot success. serializeType=" + RemotingCommand.getSerializeTypeConfigInThisServer();
+            tip+=(".  listenPort="+listenPort);
             log.info(tip);
             System.out.printf("%s%n", tip);
             return controller;

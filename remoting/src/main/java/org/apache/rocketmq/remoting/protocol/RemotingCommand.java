@@ -150,7 +150,6 @@ public class RemotingCommand {
         byteBuffer.get(headerData);
 
         RemotingCommand cmd = headerDecode(headerData, getProtocolType(oriHeaderLen));
-
         int bodyLength = length - 4 - headerLength;
         byte[] bodyData = null;
         if (bodyLength > 0) {
@@ -259,9 +258,12 @@ public class RemotingCommand {
                             }
 
                             field.setAccessible(true);
+                            //这里拿取字段类型用锁,完全可以去掉
                             String type = getCanonicalName(field.getType());
                             Object valueParsed;
 
+                            // 这一段意思是只处理 基本数据类型/包装类型/String?
+                            // 这里何不优化一下 直接静态初始化这些类型,拿到字段的类型进行比对,没有则抛异常;
                             if (type.equals(STRING_CANONICAL_NAME)) {
                                 valueParsed = value;
                             } else if (type.equals(INTEGER_CANONICAL_NAME_1) || type.equals(INTEGER_CANONICAL_NAME_2)) {
@@ -285,6 +287,7 @@ public class RemotingCommand {
                 }
             }
 
+            // SendMessageRequestHeaderV2 
             objectHeader.checkFields();
         }
 
@@ -296,6 +299,7 @@ public class RemotingCommand {
 
         if (field == null) {
             field = classHeader.getDeclaredFields();
+            // 这里感觉没必要加锁,或者说CAS的并发MAP好一点?
             synchronized (CLASS_HASH_MAP) {
                 CLASS_HASH_MAP.put(classHeader, field);
             }

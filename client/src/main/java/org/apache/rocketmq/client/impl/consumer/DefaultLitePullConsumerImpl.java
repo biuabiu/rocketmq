@@ -1005,7 +1005,7 @@ public class DefaultLitePullConsumerImpl implements MQConsumerInner {
             return false;
         }
 
-        Iterator iter = set2.iterator();
+        Iterator<MessageQueue> iter = set2.iterator();
         boolean isEqual = true;
         while (iter.hasNext()) {
             if (!set1.contains(iter.next())) {

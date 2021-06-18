@@ -41,6 +41,7 @@ public class MappedFileQueue {
 
     private final CopyOnWriteArrayList<MappedFile> mappedFiles = new CopyOnWriteArrayList<MappedFile>();
 
+    //AllocateMappedFileService
     private final AllocateMappedFileService allocateMappedFileService;
 
     private long flushedWhere = 0;
@@ -191,6 +192,7 @@ public class MappedFileQueue {
         return 0;
     }
 
+    // 创建文件
     public MappedFile getLastMappedFile(final long startOffset, boolean needCreate) {
         long createOffset = -1;
         MappedFile mappedFileLast = getLastMappedFile();
@@ -204,12 +206,15 @@ public class MappedFileQueue {
         }
 
         if (createOffset != -1 && needCreate) {
+        	// 这里创建一个偏移量为0的第一个文件
+        	//org.apache.rocketmq.store.config.MessageStoreConfig.storePathCommitLog
             String nextFilePath = this.storePath + File.separator + UtilAll.offset2FileName(createOffset);
             String nextNextFilePath = this.storePath + File.separator
                 + UtilAll.offset2FileName(createOffset + this.mappedFileSize);
             MappedFile mappedFile = null;
 
             if (this.allocateMappedFileService != null) {
+            	// 第一次会进
                 mappedFile = this.allocateMappedFileService.putRequestAndReturnMappedFile(nextFilePath,
                     nextNextFilePath, this.mappedFileSize);
             } else {

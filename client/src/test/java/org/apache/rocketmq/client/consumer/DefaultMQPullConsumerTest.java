@@ -91,7 +91,7 @@ public class DefaultMQPullConsumerTest {
 
     @Test
     public void testPullMessage_Success() throws Exception {
-        doAnswer(new Answer() {
+        doAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock mock) throws Throwable {
                 PullMessageRequestHeader requestHeader = mock.getArgument(1);
@@ -111,7 +111,7 @@ public class DefaultMQPullConsumerTest {
 
     @Test
     public void testPullMessage_NotFound() throws Exception {
-        doAnswer(new Answer() {
+        doAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock mock) throws Throwable {
                 PullMessageRequestHeader requestHeader = mock.getArgument(1);
@@ -126,7 +126,7 @@ public class DefaultMQPullConsumerTest {
 
     @Test
     public void testPullMessageAsync_Success() throws Exception {
-        doAnswer(new Answer() {
+        doAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock mock) throws Throwable {
                 PullMessageRequestHeader requestHeader = mock.getArgument(1);
