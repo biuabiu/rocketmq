@@ -47,6 +47,7 @@ public class TransientStorePool {
      * It's a heavy init method.
      */
     public void init() {
+    	// 默认5个,直接干满5G堆外内存
         for (int i = 0; i < poolSize; i++) {
             ByteBuffer byteBuffer = ByteBuffer.allocateDirect(fileSize);
 
@@ -67,12 +68,14 @@ public class TransientStorePool {
     }
 
     public void returnBuffer(ByteBuffer byteBuffer) {
+    	// 初始化容量
         byteBuffer.position(0);
         byteBuffer.limit(fileSize);
         this.availableBuffers.offerFirst(byteBuffer);
     }
 
     public ByteBuffer borrowBuffer() {
+    	// 没有开启堆外内存,返回的null
         ByteBuffer buffer = availableBuffers.pollFirst();
         if (availableBuffers.size() < poolSize * 0.4) {
             log.warn("TransientStorePool only remain {} sheets.", availableBuffers.size());

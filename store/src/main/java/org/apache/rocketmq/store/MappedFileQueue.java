@@ -206,7 +206,7 @@ public class MappedFileQueue {
         }
 
         if (createOffset != -1 && needCreate) {
-        	// 这里创建一个偏移量为0的第一个文件
+        	// 这里根据偏移量创建文件
         	//org.apache.rocketmq.store.config.MessageStoreConfig.storePathCommitLog
             String nextFilePath = this.storePath + File.separator + UtilAll.offset2FileName(createOffset);
             String nextNextFilePath = this.storePath + File.separator

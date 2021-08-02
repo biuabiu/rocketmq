@@ -66,7 +66,7 @@ public class MessageStoreConfig {
     // Resource reclaim interval
     private int cleanResourceInterval = 10000;
     // CommitLog removal interval
-    private int deleteCommitLogFilesInterval = 100;
+    private int deleteCommitLogFilesInterval = 100; //ms
     // ConsumeQueue removal interval
     private int deleteConsumeQueueFilesInterval = 100;
     private int destroyMapedFileIntervalForcibly = 1000 * 120;
@@ -106,6 +106,8 @@ public class MessageStoreConfig {
     @ImportantField
     private int maxTransferCountOnMessageInDisk = 8;
     @ImportantField
+    // 主节点默认拉取消息时占用内存的阈值控制
+    // 从节点为 再减10
     private int accessMessageInMemoryMaxRatio = 40;
     @ImportantField
     private boolean messageIndexEnable = true;
@@ -132,6 +134,7 @@ public class MessageStoreConfig {
     private boolean cleanFileForciblyEnable = true;
     private boolean warmMapedFileEnable = false;
     private boolean offsetCheckInSlave = false;
+    // commitlog lock debug 日志,日志路径固定,不建议开启
     private boolean debugLockEnable = false;
     private boolean duplicationEnable = false;
     private boolean diskFallRecorded = true;
@@ -139,8 +142,15 @@ public class MessageStoreConfig {
     private int defaultQueryMaxNum = 32;
 
     @ImportantField
+    // 利用堆外内存存储发送过来的消息,优先写到该内存中
+    //org.apache.rocketmq.store.TransientStorePool.init()
+    // 那这里还需要配置JVM可申请的堆外内存大小吗?
+    //-XX:MaxDirectMemorySize
+    // isTransientStorePoolEnable 限制较多
     private boolean transientStorePoolEnable = false;
+    // 若开启,会同时申请5个 1G大小的buffer
     private int transientStorePoolSize = 5;
+    
     private boolean fastFailIfNoBufferInStorePool = false;
 
     private boolean enableDLegerCommitLog = false;

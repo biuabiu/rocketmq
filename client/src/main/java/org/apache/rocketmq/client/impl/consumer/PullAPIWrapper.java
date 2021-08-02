@@ -71,7 +71,9 @@ public class PullAPIWrapper {
         final SubscriptionData subscriptionData) {
         PullResultExt pullResultExt = (PullResultExt) pullResult;
 
+        // C1 pull 消息 这里更新推荐的broker id 
         this.updatePullFromWhichNode(mq, pullResultExt.getSuggestWhichBrokerId());
+        
         if (PullStatus.FOUND == pullResult.getPullStatus()) {
             ByteBuffer byteBuffer = ByteBuffer.wrap(pullResultExt.getMessageBinary());
             List<MessageExt> msgList = MessageDecoder.decodes(byteBuffer);
@@ -215,6 +217,7 @@ public class PullAPIWrapper {
             return this.defaultBrokerId;
         }
 
+        // 这里会拿到推荐的broker id 
         AtomicLong suggest = this.pullFromWhichNodeTable.get(mq);
         if (suggest != null) {
             return suggest.get();

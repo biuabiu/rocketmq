@@ -90,6 +90,7 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer {
     /**
      * Compress message body threshold, namely, message body larger than 4k will be compressed on default.
      */
+    // 消息体大于4K 启用压缩
     private int compressMsgBodyOverHowmuch = 1024 * 4;
 
     /**
@@ -97,6 +98,7 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer {
      *
      * This may potentially cause message duplication which is up to application developers to resolve.
      */
+    // 同步发送消息,失败时重试次数, 一共1+2
     private int retryTimesWhenSendFailed = 2;
 
     /**
@@ -104,6 +106,7 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer {
      *
      * This may potentially cause message duplication which is up to application developers to resolve.
      */
+    // 异步发送消息时,失败的重试次数
     private int retryTimesWhenSendAsyncFailed = 2;
 
     /**
@@ -1075,6 +1078,7 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer {
         return this.defaultMQProducerImpl.isSendLatencyFaultEnable();
     }
 
+    // broker 故障延迟机制
     public void setSendLatencyFaultEnable(final boolean sendLatencyFaultEnable) {
         this.defaultMQProducerImpl.setSendLatencyFaultEnable(sendLatencyFaultEnable);
     }

@@ -59,6 +59,7 @@ public class CommitLog {
     private final FlushCommitLogService flushCommitLogService;
 
     //If TransientStorePool enabled, we must flush message to FileChannel at fixed periods
+    // 开启推外内存才使用
     private final FlushCommitLogService commitLogService;
 
     private final AppendMessageCallback appendMessageCallback;
@@ -104,6 +105,7 @@ public class CommitLog {
     public void start() {
         this.flushCommitLogService.start();
 
+        // 开启推外内存才使用
         if (defaultMessageStore.getMessageStoreConfig().isTransientStorePoolEnable()) {
             this.commitLogService.start();
         }

@@ -60,6 +60,7 @@ public class BrokerConfig {
     private boolean brokerTopicEnable = true;
     
     // 自动创建订阅组
+    //https://blog.csdn.net/yifouhu2947/article/details/88102724
     @ImportantField
     private boolean autoCreateSubscriptionGroup = true;
     
@@ -73,6 +74,8 @@ public class BrokerConfig {
      * thread numbers for send message thread pool, since spin lock will be used by default since 4.0.x, the default
      * value is 1.
      */
+    // 使用可重入锁就是可调配该参数大小?
+    // 这里是响应发送结果到 producer
     private int sendMessageThreadPoolNums = 1; //16 + Runtime.getRuntime().availableProcessors() * 4;
     private int pullMessageThreadPoolNums = 16 + Runtime.getRuntime().availableProcessors() * 2;
     private int processReplyMessageThreadPoolNums = 16 + Runtime.getRuntime().availableProcessors() * 2;
@@ -88,6 +91,7 @@ public class BrokerConfig {
      */
     private int endTransactionThreadPoolNums = 8 + Runtime.getRuntime().availableProcessors() * 2;
 
+    // 刷消费者偏移量数据到磁盘间隔
     private int flushConsumerOffsetInterval = 1000 * 5;
 
     private int flushConsumerOffsetHistoryInterval = 1000 * 60;
@@ -127,15 +131,23 @@ public class BrokerConfig {
     private String regionId = MixAll.DEFAULT_TRACE_REGION_ID;
     private int registerBrokerTimeoutMills = 6000;
 
+    // 需要前置达到在主节点上剩余内存消息大小占用总内存40%(默认)以上推荐从节点读时,
+    // 然后这里指定了开启从节点是否允许读才可以
     private boolean slaveReadEnable = false;
 
     private boolean disableConsumeIfConsumerReadSlowly = false;
+    
     private long consumerFallbehindThreshold = 1024L * 1024 * 1024 * 16;
 
     private boolean brokerFastFailureEnable = true;
+    
+    // 消息在发送队列的超时阈值,遇到TIMEOUT_CLEAN_QUEUE是将该值调大
     private long waitTimeMillsInSendQueue = 200;
+    
     private long waitTimeMillsInPullQueue = 5 * 1000;
+    
     private long waitTimeMillsInHeartbeatQueue = 31 * 1000;
+    
     private long waitTimeMillsInTransactionQueue = 3 * 1000;
 
     private long startAcceptSendRequestTimeStamp = 0L;

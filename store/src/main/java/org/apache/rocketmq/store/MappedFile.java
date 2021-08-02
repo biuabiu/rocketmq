@@ -144,6 +144,7 @@ public class MappedFile extends ReferenceResource {
     public void init(final String fileName, final int fileSize,
         final TransientStorePool transientStorePool) throws IOException {
         init(fileName, fileSize);
+        // 开启堆外内存才存在该对象
         this.writeBuffer = transientStorePool.borrowBuffer();
         this.transientStorePool = transientStorePool;
     }
@@ -204,6 +205,7 @@ public class MappedFile extends ReferenceResource {
 
         if (currentPos < this.fileSize) {
         	// C1 store 线索
+        	// 优先append到堆外内存buffer
             ByteBuffer byteBuffer = writeBuffer != null ? writeBuffer.slice() : this.mappedByteBuffer.slice();
             byteBuffer.position(currentPos);
             AppendMessageResult result;
@@ -279,6 +281,7 @@ public class MappedFile extends ReferenceResource {
                 	// C1 mappedFile store ,刷新在前面切片的内存到磁盘
                     //We only append data to fileChannel or mappedByteBuffer, never both.
                     if (writeBuffer != null || this.fileChannel.position() != 0) {
+                    	// 开启堆外内存时走
                         this.fileChannel.force(false);
                     } else {
                         this.mappedByteBuffer.force();
@@ -304,6 +307,7 @@ public class MappedFile extends ReferenceResource {
         }
         if (this.isAbleToCommit(commitLeastPages)) {
             if (this.hold()) {
+            	// 提交到file channel
                 commit0(commitLeastPages);
                 this.release();
             } else {
@@ -313,6 +317,7 @@ public class MappedFile extends ReferenceResource {
 
         // All dirty data has been committed to FileChannel.
         if (writeBuffer != null && this.transientStorePool != null && this.fileSize == this.committedPosition.get()) {
+        	// 这里不用再提交到 write buffer
             this.transientStorePool.returnBuffer(writeBuffer);
             this.writeBuffer = null;
         }

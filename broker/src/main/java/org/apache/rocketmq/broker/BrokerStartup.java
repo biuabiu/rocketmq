@@ -115,6 +115,7 @@ public class BrokerStartup {
 			nettyServerConfig.setListenPort(10911);
 			final MessageStoreConfig messageStoreConfig = new MessageStoreConfig();
 
+			// 默认主40,从30 
 			if (BrokerRole.SLAVE == messageStoreConfig.getBrokerRole()) {
 				int ratio = messageStoreConfig.getAccessMessageInMemoryMaxRatio() - 10;
 				messageStoreConfig.setAccessMessageInMemoryMaxRatio(ratio);
