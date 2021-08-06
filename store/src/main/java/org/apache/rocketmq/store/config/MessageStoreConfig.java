@@ -35,6 +35,7 @@ public class MessageStoreConfig {
     // ConsumeQueue file size,default is 30W
     private int mappedFileSizeConsumeQueue = 300000 * ConsumeQueue.CQ_STORE_UNIT_SIZE;
     // enable consume queue ext
+    //是否启用ConsumeQueue扩展属性
     private boolean enableConsumeQueueExt = false;
     // ConsumeQueue extend file size, 48M
     private int mappedFileSizeConsumeQueueExt = 48 * 1024 * 1024;
@@ -45,11 +46,13 @@ public class MessageStoreConfig {
     // CommitLog flush interval
     // flush data to disk
     @ImportantField
+    // flush 数据的间隔
     private int flushIntervalCommitLog = 500;
 
     // Only used if TransientStorePool enabled
     // flush data to FileChannel
     @ImportantField
+    // commit 数据的间隔,然后就唤醒 flush线程
     private int commitIntervalCommitLog = 200;
 
     /**
@@ -62,6 +65,7 @@ public class MessageStoreConfig {
     @ImportantField
     private boolean flushCommitLogTimed = false;
     // ConsumeQueue flush interval
+    // 刷新消息到consumer queue中的时间间隔
     private int flushIntervalConsumeQueue = 1000;
     // Resource reclaim interval
     private int cleanResourceInterval = 10000;
@@ -88,14 +92,16 @@ public class MessageStoreConfig {
     private boolean checkCRCOnRecover = true;
     // How many pages are to be flushed when flush CommitLog
     private int flushCommitLogLeastPages = 4;
-    // How many pages are to be committed when commit data to file
+    // How many pages are to be committed when commit data to file //将数据提交到文件时要提交多少页
     private int commitCommitLogLeastPages = 4;
     // Flush page size when the disk in warming state
     private int flushLeastPagesWhenWarmMapedFile = 1024 / 4 * 16;
     // How many pages are to be flushed when flush ConsumeQueue
+    // 刷新到consume queue的页大小 
     private int flushConsumeQueueLeastPages = 2;
     private int flushCommitLogThoroughInterval = 1000 * 10;
     private int commitCommitLogThoroughInterval = 200;
+    // 一次完全彻底刷入时间间隔是60s
     private int flushConsumeQueueThoroughInterval = 1000 * 60;
     @ImportantField
     private int maxTransferBytesOnMessageInMemory = 1024 * 256;
@@ -110,6 +116,7 @@ public class MessageStoreConfig {
     // 从节点为 再减10
     private int accessMessageInMemoryMaxRatio = 40;
     @ImportantField
+    // 消息构建索引开关
     private boolean messageIndexEnable = true;
     private int maxHashSlotNum = 5000000;
     private int maxIndexNum = 5000000 * 4;
@@ -136,6 +143,7 @@ public class MessageStoreConfig {
     private boolean offsetCheckInSlave = false;
     // commitlog lock debug 日志,日志路径固定,不建议开启
     private boolean debugLockEnable = false;
+    // 是否启用复制
     private boolean duplicationEnable = false;
     private boolean diskFallRecorded = true;
     private long osPageCacheBusyTimeOutMills = 1000;

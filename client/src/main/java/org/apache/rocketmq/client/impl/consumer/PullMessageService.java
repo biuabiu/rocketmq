@@ -92,7 +92,10 @@ public class PullMessageService extends ServiceThread {
 
         while (!this.isStopped()) {
             try {
+            	// 没有会阻塞
+            	// 拉取一次后,成功后再根据org.apache.rocketmq.client.consumer.DefaultMQPushConsumer.pullInterval拉取
                 PullRequest pullRequest = this.pullRequestQueue.take();
+                // 拉取消息,若没有
                 this.pullMessage(pullRequest);
             } catch (InterruptedException ignored) {
             } catch (Exception e) {

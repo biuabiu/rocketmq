@@ -42,6 +42,7 @@ import org.apache.rocketmq.store.util.LibC;
 import sun.nio.ch.DirectBuffer;
 
 public class MappedFile extends ReferenceResource {
+	// 页大小
     public static final int OS_PAGE_SIZE = 1024 * 4;
     protected static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.STORE_LOGGER_NAME);
 
@@ -52,15 +53,18 @@ public class MappedFile extends ReferenceResource {
     protected final AtomicInteger committedPosition = new AtomicInteger(0);
     private final AtomicInteger flushedPosition = new AtomicInteger(0);
     protected int fileSize;
+    // consume 优先追加到这里 org.apache.rocketmq.store.ConsumeQueue.putMessagePositionInfo
     protected FileChannel fileChannel;
     /**
      * Message will put to here first, and then reput to FileChannel if writeBuffer is not null.
      */
+    // commit 从节点,开启异步,开启堆外内存 先写到这
     protected ByteBuffer writeBuffer = null;
     protected TransientStorePool transientStorePool = null;
     private String fileName;
     private long fileFromOffset;
     private File file;
+    // 不写到上面writeBuffer,其次这里
     private MappedByteBuffer mappedByteBuffer;
     private volatile long storeTimestamp = 0;
     private boolean firstCreateInQueue = false;
@@ -217,6 +221,7 @@ public class MappedFile extends ReferenceResource {
             } else {
                 return new AppendMessageResult(AppendMessageStatus.UNKNOWN_ERROR);
             }
+            // commit时用到
             this.wrotePosition.addAndGet(result.getWroteBytes());
             this.storeTimestamp = result.getStoreTimestamp();
             return result;
@@ -279,6 +284,8 @@ public class MappedFile extends ReferenceResource {
 
                 try {
                 	// C1 mappedFile store ,刷新在前面切片的内存到磁盘
+                	// consume queue 
+                	// index file 
                     //We only append data to fileChannel or mappedByteBuffer, never both.
                     if (writeBuffer != null || this.fileChannel.position() != 0) {
                     	// 开启堆外内存时走
@@ -317,26 +324,28 @@ public class MappedFile extends ReferenceResource {
 
         // All dirty data has been committed to FileChannel.
         if (writeBuffer != null && this.transientStorePool != null && this.fileSize == this.committedPosition.get()) {
-        	// 这里不用再提交到 write buffer
+        	// 这里将使用的buffer再塞到池中
             this.transientStorePool.returnBuffer(writeBuffer);
             this.writeBuffer = null;
         }
 
+        //提交时设置
         return this.committedPosition.get();
     }
 
     protected void commit0(final int commitLeastPages) {
-        int writePos = this.wrotePosition.get();
-        int lastCommittedPosition = this.committedPosition.get();
+        int writePos = this.wrotePosition.get();//当前写指针位置
+        int lastCommittedPosition = this.committedPosition.get();//上次提交的位置
 
         if (writePos - lastCommittedPosition > commitLeastPages) {
             try {
-                ByteBuffer byteBuffer = writeBuffer.slice();
+                ByteBuffer byteBuffer = writeBuffer.slice();// 切片
                 byteBuffer.position(lastCommittedPosition);
-                byteBuffer.limit(writePos);
+                byteBuffer.limit(writePos);// 拿出这部分数据
                 this.fileChannel.position(lastCommittedPosition);
-                this.fileChannel.write(byteBuffer);
-                this.committedPosition.set(writePos);
+                this.fileChannel.write(byteBuffer);//提交到file
+                
+                this.committedPosition.set(writePos);//设置写指针位置 
             } catch (Throwable e) {
                 log.error("Error occurred when commit data to FileChannel.", e);
             }
@@ -344,13 +353,14 @@ public class MappedFile extends ReferenceResource {
     }
 
     private boolean isAbleToFlush(final int flushLeastPages) {
-        int flush = this.flushedPosition.get();
-        int write = getReadPosition();
+        int flush = this.flushedPosition.get();//上次flush
+        int write = getReadPosition();// 当前周期write
 
         if (this.isFull()) {
             return true;
         }
 
+        // 判断是否在提交也周期的页大小,同步时=0
         if (flushLeastPages > 0) {
             return ((write / OS_PAGE_SIZE) - (flush / OS_PAGE_SIZE)) >= flushLeastPages;
         }
@@ -532,10 +542,12 @@ public class MappedFile extends ReferenceResource {
         return fileName;
     }
 
+    // index file 调用
     public MappedByteBuffer getMappedByteBuffer() {
         return mappedByteBuffer;
     }
 
+    // consume queue会调用
     public ByteBuffer sliceByteBuffer() {
         return this.mappedByteBuffer.slice();
     }

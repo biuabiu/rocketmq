@@ -450,7 +450,7 @@ public class MappedFileQueue {
         if (mappedFile != null) {
             int offset = mappedFile.commit(commitLeastPages);
             long where = mappedFile.getFileFromOffset() + offset;
-            result = where == this.committedWhere;
+            result = where == this.committedWhere;// true 表示此时的周期没有数据commit?
             this.committedWhere = where;
         }
 

@@ -199,7 +199,7 @@ public class IndexService {
     }
 
     public void buildIndex(DispatchRequest req) {
-    	// C2 index flush
+    	// C2 index flush 入口
         IndexFile indexFile = retryGetAndCreateIndexFile();
         if (indexFile != null) {
             long endPhyOffset = indexFile.getEndPhyOffset();
@@ -221,6 +221,7 @@ public class IndexService {
             }
 
             if (req.getUniqKey() != null) {
+            	// 维护index数据
                 indexFile = putKey(indexFile, msg, buildKey(topic, req.getUniqKey()));
                 if (indexFile == null) {
                     log.error("putKey error commitlog {} uniqkey {}", req.getCommitLogOffset(), req.getUniqKey());
@@ -270,6 +271,7 @@ public class IndexService {
         IndexFile indexFile = null;
 
         for (int times = 0; null == indexFile && times < MAX_TRY_IDX_CREATE; times++) {
+        	// 再入
             indexFile = this.getAndCreateLastIndexFile();
             if (null != indexFile)
                 break;
@@ -312,8 +314,10 @@ public class IndexService {
             this.readWriteLock.readLock().unlock();
         }
 
+        // 初始会进,每一个index file一个线程操作flush 跟进
         if (indexFile == null) {
             try {
+            	// index file 是根据时间戳创建的
                 String fileName =
                     this.storePath + File.separator
                         + UtilAll.timeMillisToHumanString(System.currentTimeMillis());
@@ -333,6 +337,7 @@ public class IndexService {
                 Thread flushThread = new Thread(new Runnable() {
                     @Override
                     public void run() {
+                    	// 新文件启用一个线程维护刷新
                         IndexService.this.flush(flushThisFile);
                     }
                 }, "FlushIndexFileThread");

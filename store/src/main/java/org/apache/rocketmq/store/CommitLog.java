@@ -78,11 +78,14 @@ public class CommitLog {
         this.defaultMessageStore = defaultMessageStore;
 
         if (FlushDiskType.SYNC_FLUSH == defaultMessageStore.getMessageStoreConfig().getFlushDiskType()) {
+        	// 异步,刷盘
             this.flushCommitLogService = new GroupCommitService();
         } else {
+        	// 同步,刷盘
             this.flushCommitLogService = new FlushRealTimeService();
         }
 
+        // 这里的service只commit
         this.commitLogService = new CommitRealTimeService();
 
         this.appendMessageCallback = new DefaultAppendMessageCallback(defaultMessageStore.getMessageStoreConfig().getMaxMessageSize());
@@ -1278,8 +1281,10 @@ public class CommitLog {
                     boolean result = CommitLog.this.mappedFileQueue.commit(commitDataLeastPages);
                     long end = System.currentTimeMillis();
                     if (!result) {
+                    	// 为什么写了部分时反而唤醒呢?
                         this.lastCommitTimestamp = end; // result = false means some data committed.
                         //now wake up flush thread.
+                        // 这里唤醒flush 等待的线程
                         flushCommitLogService.wakeup();
                     }
 
@@ -1312,6 +1317,7 @@ public class CommitLog {
         public void run() {
             CommitLog.log.info(this.getServiceName() + " service started");
 
+            // 周而复始.直到commit提交线程的唤醒/睡眠flushIntervalCommitLog 后flush数据到磁盘
             while (!this.isStopped()) {
                 boolean flushCommitLogTimed = CommitLog.this.defaultMessageStore.getMessageStoreConfig().isFlushCommitLogTimed();
 
@@ -1335,7 +1341,8 @@ public class CommitLog {
                     if (flushCommitLogTimed) {
                         Thread.sleep(interval);
                     } else {
-                    	//这里直接唤醒,默认500 ms interval
+                    	//这里等待,默认500 ms interval
+                    	// org.apache.rocketmq.store.CommitLog.CommitRealTimeService.run()
                         this.waitForRunning(interval);
                     }
 

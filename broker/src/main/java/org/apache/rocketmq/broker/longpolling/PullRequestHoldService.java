@@ -69,8 +69,10 @@ public class PullRequestHoldService extends ServiceThread {
         while (!this.isStopped()) {
             try {
                 if (this.brokerController.getBrokerConfig().isLongPollingEnable()) {
+                	// 默认长轮询,5秒钟才拉取一次?
                     this.waitForRunning(5 * 1000);
                 } else {
+                	// 短轮询 1s 
                     this.waitForRunning(this.brokerController.getBrokerConfig().getShortPollingTimeMills());
                 }
 
@@ -116,6 +118,9 @@ public class PullRequestHoldService extends ServiceThread {
     public void notifyMessageArriving(final String topic, final int queueId, final long maxOffset, final Long tagsCode,
         long msgStoreTime, byte[] filterBitMap, Map<String, String> properties) {
         String key = this.buildKey(topic, queueId);
+        // 空拉的消息,没有拉取到时暂存在这里,根据拉取配置延迟处理
+        	//长轮询固定5秒
+        	//短轮询 可配置,默认1秒
         ManyPullRequest mpr = this.pullRequestTable.get(key);
         if (mpr != null) {
             List<PullRequest> requestList = mpr.cloneListAndClear();
@@ -138,6 +143,7 @@ public class PullRequestHoldService extends ServiceThread {
 
                         if (match) {
                             try {
+                            	// 通知consumer端拉取消息时暂存的线程消息到来,需要拉取
                                 this.brokerController.getPullMessageProcessor().executeRequestWhenWakeup(request.getClientChannel(),
                                     request.getRequestCommand());
                             } catch (Throwable e) {

@@ -143,6 +143,7 @@ public class MQClientInstance {
 
         this.pullMessageService = new PullMessageService(this);
 
+        // 监听queue rebalance ,同时包含立刻执行消息的拉取
         this.rebalanceService = new RebalanceService(this);
 
         this.defaultMQProducer = new DefaultMQProducer(MixAll.CLIENT_INNER_PRODUCER_GROUP);
@@ -236,8 +237,10 @@ public class MQClientInstance {
                     // Start various schedule tasks
                     this.startScheduledTask();
                     // Start pull service
+                    // 这里拉取消息
                     this.pullMessageService.start();
                     // Start rebalance service
+                    // 这里也会拉取
                     this.rebalanceService.start();
                     // Start push service
                     this.defaultMQProducer.getDefaultMQProducerImpl().start(false);

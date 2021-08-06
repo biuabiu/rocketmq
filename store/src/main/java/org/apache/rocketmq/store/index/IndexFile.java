@@ -32,8 +32,8 @@ public class IndexFile {
     private static int hashSlotSize = 4;
     private static int indexSize = 20;
     private static int invalidIndex = 0;
-    private final int hashSlotNum;
-    private final int indexNum;
+    private final int hashSlotNum;//5000000 org.apache.rocketmq.store.config.MessageStoreConfig.getMaxHashSlotNum()
+    private final int indexNum;// hashSlotNum*4
     private final MappedFile mappedFile;
     private final FileChannel fileChannel;
     private final MappedByteBuffer mappedByteBuffer;
@@ -49,6 +49,7 @@ public class IndexFile {
         this.hashSlotNum = hashSlotNum;
         this.indexNum = indexNum;
 
+        // 完整的共享缓冲区到 header?
         ByteBuffer byteBuffer = this.mappedByteBuffer.slice();
         this.indexHeader = new IndexHeader(byteBuffer);
 
@@ -74,7 +75,10 @@ public class IndexFile {
     public void flush() {
         long beginTime = System.currentTimeMillis();
         if (this.mappedFile.hold()) {
+        	// 更新维护再header中的buffer数据
+        	// 在哪里header实时跟进的 org.apache.rocketmq.store.index.IndexFile.putKey(String, long, long)
             this.indexHeader.updateByteBuffer();
+            // 共享缓冲区,直接刷到磁盘
             this.mappedByteBuffer.force();
             this.mappedFile.release();
             log.info("flush index file elapsed time(ms) " + (System.currentTimeMillis() - beginTime));
@@ -99,6 +103,8 @@ public class IndexFile {
 
             try {
 
+            	// 弃用 file lock ?因为是线程持有?
+            	
                 // fileLock = this.fileChannel.lock(absSlotPos, hashSlotSize,
                 // false);
                 int slotValue = this.mappedByteBuffer.getInt(absSlotPos);
@@ -145,6 +151,7 @@ public class IndexFile {
             } catch (Exception e) {
                 log.error("putKey exception, Key: " + key + " KeyHashCode: " + key.hashCode(), e);
             } finally {
+            	// 那就是下面也没必要release了
                 if (fileLock != null) {
                     try {
                         fileLock.release();

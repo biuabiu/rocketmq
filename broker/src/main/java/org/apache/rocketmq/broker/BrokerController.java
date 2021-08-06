@@ -175,6 +175,7 @@ public class BrokerController {
 		this.consumerOffsetManager = new ConsumerOffsetManager(this);
 		this.topicConfigManager = new TopicConfigManager(this);
 		this.pullMessageProcessor = new PullMessageProcessor(this);
+		// 拉取消息
 		this.pullRequestHoldService = new PullRequestHoldService(this);
 		this.messageArrivingListener = new NotifyMessageArrivingListener(this.pullRequestHoldService);
 		this.consumerIdsChangeListener = new DefaultConsumerIdsChangeListener(this);
